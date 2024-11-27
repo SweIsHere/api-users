@@ -1,9 +1,12 @@
 import json
 import boto3
+import os
 
 # Cliente de DynamoDB
 dynamodb = boto3.resource('dynamodb')
-USERS_TABLE = 'Pt_users'
+
+# Obtener el nombre de la tabla desde las variables de entorno
+USERS_TABLE = os.environ['TABLE_NAME_USERS']
 table = dynamodb.Table(USERS_TABLE)
 
 def lambda_handler(event, context):

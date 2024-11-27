@@ -1,17 +1,24 @@
 import boto3
 import json
+import os
 from boto3.dynamodb.conditions import Key
 
 # Cliente de DynamoDB
 dynamodb = boto3.resource('dynamodb')
-USERS_TABLE = 'Pt_users'
-table = dynamodb.Table(USERS_TABLE)
+
+# Obtener los nombres de las tablas desde las variables de entorno
+USERS_TABLE = os.environ['TABLE_NAME_USERS']
+TOKENS_TABLE = os.environ['TABLE_NAME_TOKENS']
+
+# Inicializar las tablas
+users_table = dynamodb.Table(USERS_TABLE)
+tokens_table = dynamodb.Table(TOKENS_TABLE)
 
 def lambda_handler(event, context):
     try:
+        # Obtener los datos del evento
         body = event.get('body', {})
-        # Validar encabezado Authorization
-        token = event['headers']['Authorization']
+        token = event['headers'].get('Authorization')
 
         if not token:
             return {
@@ -19,10 +26,7 @@ def lambda_handler(event, context):
                 'message': 'Falta el encabezado Authorization'
             }
 
-       
-
-        # Obtener tenant_id del cuerpo
-        body = event.get('body', {})
+        # Obtener tenant_id del cuerpo de la solicitud
         tenant_id = body.get('tenant_id')
         if not tenant_id:
             return {
@@ -30,9 +34,8 @@ def lambda_handler(event, context):
                 'message': 'Falta el parámetro tenant_id'
             }
 
+        # Invocar el Lambda para validar el token
         lambda_client = boto3.client('lambda')
-
-        # Crear el payload como JSON
         payload = {
             "token": token,
             "tenant_id": tenant_id
@@ -56,6 +59,7 @@ def lambda_handler(event, context):
                 'message': 'Respuesta inválida de ValidarTokenAcceso'
             }
 
+        # Manejar errores de validación de token
         if response['statusCode'] == 403:
             return {
                 'statusCode': 403,
@@ -68,13 +72,12 @@ def lambda_handler(event, context):
                 'message': 'Unauthorized - Token Expirado'
             }
 
-        # Token válido, continuar con la lógica
-        # Consultar DynamoDB para obtener el usuario
-        dynamo_response = table.query(
+        # Token válido, proceder con la consulta de usuario en DynamoDB
+        dynamo_response = users_table.query(
             KeyConditionExpression=Key('tenant_id').eq(tenant_id)
         )
-        items = dynamo_response.get('Items', [])
 
+        items = dynamo_response.get('Items', [])
         if not items:
             return {
                 "statusCode": 404,

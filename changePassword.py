@@ -1,10 +1,13 @@
 import json
 import boto3
 import hashlib
+import os
 
 # Cliente de DynamoDB
 dynamodb = boto3.resource('dynamodb')
-USERS_TABLE = 'Pt_users'
+
+# Obtener el nombre de la tabla desde las variables de entorno
+USERS_TABLE = os.environ['TABLE_NAME_USERS']
 table = dynamodb.Table(USERS_TABLE)
 
 # Función para hashear la contraseña
@@ -27,7 +30,7 @@ def lambda_handler(event, context):
 
         # Obtener el cuerpo de la solicitud
         body = event.get('body', '{}')  # Si el body es un string JSON, lo dejamos como string
-
+        body = json.loads(body)  # Deserializamos el body si es necesario
 
         # Obtener tenant_id del cuerpo
         tenant_id = body.get('tenant_id')

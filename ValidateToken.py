@@ -1,6 +1,7 @@
 from boto3.dynamodb.conditions import Key
 import boto3
 import uuid
+import os  # Para acceder a las variables de entorno
 from datetime import datetime, timedelta
 
 def lambda_handler(event, context):
@@ -15,11 +16,16 @@ def lambda_handler(event, context):
                 'body': 'Faltan parámetros tenant_id o token'
             }
 
+        # Obtener el nombre de la tabla de usuarios desde las variables de entorno
+        table_name = os.environ['TABLE_NAME_USERS']
+        print(f"Usando la tabla DynamoDB: {table_name}")
+
+        # Cliente DynamoDB
         dynamodb = boto3.resource('dynamodb')
-        table_tokens = dynamodb.Table('Pt_tokens_acceso')
+        table = dynamodb.Table(table_name)
 
         # Buscar el token en DynamoDB
-        response = table_tokens.query(
+        response = table.query(
             KeyConditionExpression=Key('tenant_id').eq(tenant_id) & Key('token').eq(token)
         )
 
@@ -55,7 +61,7 @@ def lambda_handler(event, context):
             new_token_expiry = datetime.now() + timedelta(minutes=60)
 
             # Eliminar el registro antiguo
-            table_tokens.delete_item(
+            table.delete_item(
                 Key={
                     'tenant_id': tenant_id,
                     'token': token  # Eliminar el token actual (Sort Key)
@@ -63,7 +69,7 @@ def lambda_handler(event, context):
             )
 
             # Crear un nuevo registro con el nuevo token
-            table_tokens.put_item(
+            table.put_item(
                 Item={
                     'tenant_id': tenant_id,
                     'token': new_token,  # Nuevo token como Sort Key

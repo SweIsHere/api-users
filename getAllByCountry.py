@@ -1,14 +1,17 @@
 import boto3
+import os
 from boto3.dynamodb.conditions import Key
 
 # Cliente de DynamoDB
 dynamodb = boto3.resource('dynamodb')
-USERS_TABLE = 'Pt_users'
+
+# Obtener el nombre de la tabla desde las variables de entorno
+USERS_TABLE = os.environ['TABLE_NAME_USERS']
 table = dynamodb.Table(USERS_TABLE)
 
 def lambda_handler(event, context):
     # Obtener el valor de 'country' directamente del evento
-    country = event.get('country')  # Usar directamente event.get()
+    country = event.get('country')
 
     if not country:
         return {
@@ -16,11 +19,10 @@ def lambda_handler(event, context):
             "message": "Falta el parámetro 'country'"
         }
 
-    # Hacer la consulta en la tabla usando el índice GSI basado en 'country'
     try:
-        # Consulta usando el GSI 'country-index' para filtrar por el campo 'country'
+        # Hacer la consulta en la tabla usando el índice GSI basado en 'country'
         response = table.query(
-            IndexName='country-index',  # Asegúrate de que este sea el nombre del GSI en tu tabla
+            IndexName='CountryIndex',  # Usar el índice GSI definido para 'country'
             KeyConditionExpression=Key('country').eq(country)
         )
 

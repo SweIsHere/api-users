@@ -3,23 +3,63 @@ service: api-users
 
 provider:
   name: aws
-  runtime: python3.12	
-  # Default memory size for functions (default: 1024MB)
-  memorySize: 1024
-  timeout: 30
-  iam:
-    role: arn:aws:iam::542697993719:role/LabRole	
-  environment:
-    TABLE_NAME: ${sls:stage}-Pt_users
-
-
-provider:
-  name: aws
-  runtime: python3.9
+  runtime: python3.12  
   region: us-east-1
-  stage: dev
+  stage: dev  # Definir el entorno como 'dev' para que los nombres de las tablas sean únicos
   memorySize: 128
   timeout: 30
+  iam:
+    role: arn:aws:iam::542697993719:role/LabRole
+  environment:
+    # Definir nombres únicos para las tablas usando el stage
+    TABLE_NAME_USERS: ${self:provider.stage}-Pt_users  # Nombre único para la tabla de usuarios
+    TABLE_NAME_TOKENS: ${self:provider.stage}-Pt_tokens_acceso  # Nombre único para la tabla de tokens
+
+resources:
+  Resources:
+    # Tabla DynamoDB para usuarios
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.TABLE_NAME_USERS}  # Usar la variable de entorno para el nombre de la tabla
+        AttributeDefinitions:
+          - AttributeName: tenant_id
+            AttributeType: S
+          - AttributeName: country
+            AttributeType: S
+        KeySchema:
+          - AttributeName: tenant_id
+            KeyType: HASH
+        # Índices secundarios globales (si es necesario para búsqueda por country, por ejemplo)
+        GlobalSecondaryIndexes:
+          - IndexName: CountryIndex
+            KeySchema:
+              - AttributeName: country
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        BillingMode: PAY_PER_REQUEST
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: true  # Habilitar PITR para recuperación ante desastres
+    
+    # Tabla DynamoDB para tokens
+    TokensTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.TABLE_NAME_TOKENS}  # Usar la variable de entorno para el nombre de la tabla
+        AttributeDefinitions:
+          - AttributeName: tenant_id
+            AttributeType: S
+          - AttributeName: token
+            AttributeType: S
+        KeySchema:
+          - AttributeName: tenant_id
+            KeyType: HASH
+          - AttributeName: token
+            KeyType: RANGE  # Sort key para los tokens
+        BillingMode: PAY_PER_REQUEST
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: true  # Habilitar PITR para recuperación ante desastres
 
 functions:
   # Función para registrar un usuario
@@ -32,6 +72,7 @@ functions:
           cors: true
           integration: lambda
 
+  # Función para iniciar sesión
   loginUser:
     handler: loginUser.lambda_handler
     events:
@@ -40,8 +81,8 @@ functions:
           method: post
           cors: true
           integration: lambda    
-          
 
+  # Función para validar token
   ValidateToken:
     handler: handler.validateTokenHandler
 
@@ -55,8 +96,16 @@ functions:
           cors: true
           integration: lambda
           request:
-            headers:
-              Authorization: true  # Encabezado Authorization
+            template:
+              application/json: |
+                {
+                  "method": "$context.httpMethod",
+                  "path": "$context.path",
+                  "headers": {
+                    "Authorization": "$input.params('Authorization')"
+                  },
+                  "body": $input.body
+                }
 
   # Función para obtener usuarios por país
   getUsersByCountry:
@@ -67,7 +116,6 @@ functions:
           method: get
           cors: true
           integration: lambda
-          
 
   # Función para obtener usuario por tenant_id
   getUserByTenantId:
@@ -79,11 +127,16 @@ functions:
           cors: true
           integration: lambda
           request:
-            parameters:
-              path:
-                tenant_id: true
-            headers:
-              Authorization: true  # Encabezado Authorization para este endpoint también
+            template:
+              application/json: |
+                {
+                  "method": "$context.httpMethod",
+                  "path": "$context.path",
+                  "headers": {
+                    "Authorization": "$input.params('Authorization')"
+                  },
+                  "body": $input.body
+                }
 
   # Función para cambiar el nombre de usuario
   changeUsername:
@@ -94,41 +147,14 @@ functions:
           method: patch
           cors: true
           integration: lambda
-          
-
-
-resources:
-  Resources:
-    # Tabla DynamoDB para usuarios
-    UsersTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: Pt_users
-        AttributeDefinitions:
-          - AttributeName: tenant_id
-            AttributeType: S
-          - AttributeName: country
-            AttributeType: S
-        KeySchema:
-          - AttributeName: tenant_id
-            KeyType: HASH
-        # Cambiar el modo de facturación a PAY_PER_REQUEST
-        BillingMode: PAY_PER_REQUEST
-        PointInTimeRecoverySpecification:
-          PointInTimeRecoveryEnabled: true  # Habilitar PITR
-
-    # Índice Global Secundario para buscar usuarios por país
-    UsersTableCountryIndex:
-      Type: AWS::DynamoDB::GlobalSecondaryIndex
-      Properties:
-        IndexName: CountryIndex
-        KeySchema:
-          - AttributeName: country
-            KeyType: HASH
-        Projection:
-          ProjectionType: ALL
-        # Autoescalado, sin provisión manual de capacidad
-        BillingMode: PAY_PER_REQUEST
-        TableName: !Ref UsersTable
-
-
+          request:
+            template:
+              application/json: |
+                {
+                  "method": "$context.httpMethod",
+                  "path": "$context.path",
+                  "headers": {
+                    "Authorization": "$input.params('Authorization')"
+                  },
+                  "body": $input.body
+                }

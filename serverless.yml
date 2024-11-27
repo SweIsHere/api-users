@@ -42,7 +42,7 @@ functions:
 
   # Función para validar token
   ValidateToken:
-    handler: handler.validateTokenHandler
+    handler: handler.ValidateToken
     memorySize: 520
 
   # Función para cambiar la contraseña

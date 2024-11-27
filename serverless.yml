@@ -1,0 +1,144 @@
+org: angelt
+service: api-users
+
+provider:
+  name: aws
+  runtime: python3.12	
+  # Default memory size for functions (default: 1024MB)
+  memorySize: 1024
+  timeout: 30
+  iam:
+    role: arn:aws:iam::542697993719:role/LabRole	
+  environment:
+    TABLE_NAME: ${sls:stage}-Pt_users
+
+
+provider:
+  name: aws
+  runtime: python3.9
+  region: us-east-1
+  stage: dev
+  memorySize: 128
+  timeout: 30
+
+functions:
+  # Función para registrar un usuario
+  registerUser:
+    handler: registerUser.lambda_handler
+    events:
+      - http:
+          path: /users/register
+          method: post
+          cors: true
+          integration: lambda
+
+  loginUser:
+    handler: loginUser.lambda_handler
+    events:
+      - http:
+          path: /users/login
+          method: post
+          cors: true
+          integration: lambda    
+          
+
+  ValidateToken:
+    handler: handler.validateTokenHandler
+
+  # Función para cambiar la contraseña
+  changePassword:
+    handler: changePassword.lambda_handler
+    events:
+      - http:
+          path: /users/change-password
+          method: patch
+          cors: true
+          integration: lambda
+          request:
+            headers:
+              Authorization: true  # Encabezado Authorization
+
+  # Función para obtener usuarios por país
+  getUsersByCountry:
+    handler: getAllByCountry.lambda_handler
+    events:
+      - http:
+          path: /users/getallbycountry
+          method: get
+          cors: true
+          integration: lambda
+          
+
+  # Función para obtener usuario por tenant_id
+  getUserByTenantId:
+    handler: getInfoById.lambda_handler
+    events:
+      - http:
+          path: /users/info
+          method: get
+          cors: true
+          integration: lambda
+          request:
+            parameters:
+              path:
+                tenant_id: true
+            headers:
+              Authorization: true  # Encabezado Authorization para este endpoint también
+
+  # Función para cambiar el nombre de usuario
+  changeUsername:
+    handler: changeUsername.lambda_handler
+    events:
+      - http:
+          path: /users/change-username
+          method: patch
+          cors: true
+          integration: lambda
+          
+
+
+resources:
+  Resources:
+    # Tabla DynamoDB para usuarios
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: Pt_users
+        AttributeDefinitions:
+          - AttributeName: tenant_id
+            AttributeType: S
+          - AttributeName: country
+            AttributeType: S
+        KeySchema:
+          - AttributeName: tenant_id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: true  # Habilitar PITR
+
+    # Índice Global Secundario para buscar usuarios por país
+    UsersTableCountryIndex:
+      Type: AWS::DynamoDB::GlobalSecondaryIndex
+      Properties:
+        IndexName: CountryIndex
+        KeySchema:
+          - AttributeName: country
+            KeyType: HASH
+        Projection:
+          ProjectionType: ALL
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+        TableName: !Ref UsersTable
+
+
+  Outputs:
+    UsersTableName:
+      Description: "Nombre de la tabla DynamoDB"
+      Value: !Ref UsersTable
+    UsersTableCountryIndexName:
+      Description: "Nombre del índice secundario para búsqueda por país"
+      Value: !Ref UsersTableCountryIndex
+

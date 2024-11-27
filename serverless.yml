@@ -14,57 +14,14 @@ provider:
     # Definir nombres únicos para las tablas usando el stage
     TABLE_NAME_USERS: ${self:provider.stage}-Pt_users  # Nombre único para la tabla de usuarios
     TABLE_NAME_TOKENS: ${self:provider.stage}-Pt_tokens_acceso  # Nombre único para la tabla de tokens
-
-resources:
-  Resources:
-    # Tabla DynamoDB para usuarios
-    UsersTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${self:provider.environment.TABLE_NAME_USERS}  # Usar la variable de entorno para el nombre de la tabla
-        AttributeDefinitions:
-          - AttributeName: tenant_id
-            AttributeType: S
-          - AttributeName: country
-            AttributeType: S
-        KeySchema:
-          - AttributeName: tenant_id
-            KeyType: HASH
-        # Índices secundarios globales (si es necesario para búsqueda por country, por ejemplo)
-        GlobalSecondaryIndexes:
-          - IndexName: CountryIndex
-            KeySchema:
-              - AttributeName: country
-                KeyType: HASH
-            Projection:
-              ProjectionType: ALL
-        BillingMode: PAY_PER_REQUEST
-        PointInTimeRecoverySpecification:
-          PointInTimeRecoveryEnabled: true  # Habilitar PITR para recuperación ante desastres
-    
-    # Tabla DynamoDB para tokens
-    TokensTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${self:provider.environment.TABLE_NAME_TOKENS}  # Usar la variable de entorno para el nombre de la tabla
-        AttributeDefinitions:
-          - AttributeName: tenant_id
-            AttributeType: S
-          - AttributeName: token
-            AttributeType: S
-        KeySchema:
-          - AttributeName: tenant_id
-            KeyType: HASH
-          - AttributeName: token
-            KeyType: RANGE  # Sort key para los tokens
-        BillingMode: PAY_PER_REQUEST
-        PointInTimeRecoverySpecification:
-          PointInTimeRecoveryEnabled: true  # Habilitar PITR para recuperación ante desastres
+    SERVICE_NAME: ${self:service}
+    STAGE: ${self:provider.stage}
 
 functions:
   # Función para registrar un usuario
   registerUser:
     handler: registerUser.lambda_handler
+    memorySize: 320
     events:
       - http:
           path: /users/register
@@ -75,6 +32,7 @@ functions:
   # Función para iniciar sesión
   loginUser:
     handler: loginUser.lambda_handler
+    memorySize: 320
     events:
       - http:
           path: /users/login
@@ -85,10 +43,12 @@ functions:
   # Función para validar token
   ValidateToken:
     handler: handler.validateTokenHandler
+    memorySize: 520
 
   # Función para cambiar la contraseña
   changePassword:
     handler: changePassword.lambda_handler
+    memorySize: 320
     events:
       - http:
           path: /users/change-password
@@ -110,20 +70,22 @@ functions:
   # Función para obtener usuarios por país
   getUsersByCountry:
     handler: getAllByCountry.lambda_handler
+    memorySize: 320
     events:
       - http:
           path: /users/getallbycountry
-          method: get
+          method: post
           cors: true
           integration: lambda
 
   # Función para obtener usuario por tenant_id
   getUserByTenantId:
     handler: getInfoById.lambda_handler
+    memorySize: 320
     events:
       - http:
           path: /users/info
-          method: get
+          method: post
           cors: true
           integration: lambda
           request:
@@ -141,6 +103,7 @@ functions:
   # Función para cambiar el nombre de usuario
   changeUsername:
     handler: changeUsername.lambda_handler
+    memorySize: 320
     events:
       - http:
           path: /users/change-username
@@ -158,3 +121,64 @@ functions:
                   },
                   "body": $input.body
                 }
+
+
+resources:
+  Resources:
+    # Tabla DynamoDB para usuarios (Pt_users)
+    DynamoDbTableUsers:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: tenant_id
+            AttributeType: S
+          - AttributeName: country
+            AttributeType: S
+        KeySchema:
+          - AttributeName: tenant_id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:provider.environment.TABLE_NAME_USERS}  # Nombre de la tabla de usuarios
+
+        # Habilitar la recuperación de punto en el tiempo (backup)
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: true
+
+        # Definición de un índice secundario global para 'country'
+        GlobalSecondaryIndexes:
+          - IndexName: CountryIndex  # Nombre del índice
+            KeySchema:
+              - AttributeName: country
+                KeyType: HASH  # 'country' como clave HASH en el índice
+            Projection:
+              ProjectionType: ALL  # Incluye todos los atributos en el índice
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
+
+    # Tabla DynamoDB para tokens (Pt_tokens_acceso)
+    DynamoDbTableTokens:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: tenant_id
+            AttributeType: S
+          - AttributeName: token
+            AttributeType: S
+        KeySchema:
+          - AttributeName: tenant_id
+            KeyType: HASH
+          - AttributeName: token
+            KeyType: RANGE  # Sort key para los tokens
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:provider.environment.TABLE_NAME_TOKENS}  # Nombre de la tabla de tokens
+
+        # Habilitar la recuperación de punto en el tiempo (backup)
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: true
+
+        

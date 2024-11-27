@@ -39,8 +39,10 @@ def lambda_handler(event, context):
     }
 
     # Invocar el Lambda ValidarTokenAcceso
+    lambda_function_name = f"{os.environ['SERVICE_NAME']}-{os.environ['STAGE']}-ValidateToken"
+
     invoke_response = lambda_client.invoke(
-        FunctionName="ValidateToken",
+        FunctionName=lambda_function_name,
         InvocationType='RequestResponse',
         Payload=json.dumps(payload)
     )

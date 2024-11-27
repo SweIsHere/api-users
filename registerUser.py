@@ -37,7 +37,7 @@ def lambda_handler(event, context):
             mensaje = {'error': 'Invalid request body: missing tenant_id, password, country or username'}
             return {
                 'statusCode': 400,
-                'body': json.dumps(mensaje)
+                'body': mensaje
             }
 
         # Normalizar el país ingresado (convertir a minúsculas y quitar espacios)
@@ -46,7 +46,7 @@ def lambda_handler(event, context):
         # Si el país ingresado es vacío o contiene caracteres no válidos, retornar un error
         if not country_input.isalpha():
             mensaje = {'error': 'Invalid country, please enter a valid name'}
-            return {'statusCode': 400, 'body': json.dumps(mensaje)}
+            return {'statusCode': 400, 'body': mensaje}
 
         # Hashea la contraseña antes de almacenarla
         hashed_password = hash_password(password)
@@ -70,7 +70,7 @@ def lambda_handler(event, context):
         mensaje = {'message': 'User registered successfully', 'tenant_id': tenant_id}
         return {
             'statusCode': 200,
-            'body': json.dumps(mensaje)  # Convertir la respuesta a JSON
+            'body': mensaje  # Convertir la respuesta a JSON
         }
 
     except Exception as e:
@@ -79,5 +79,5 @@ def lambda_handler(event, context):
         mensaje = {'error': str(e)}
         return {
             'statusCode': 500,
-            'body': json.dumps(mensaje)  # Convertir el mensaje de error a JSON
+            'body': mensaje  # Convertir el mensaje de error a JSON
         }

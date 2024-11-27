@@ -112,9 +112,8 @@ resources:
         KeySchema:
           - AttributeName: tenant_id
             KeyType: HASH
-        ProvisionedThroughput:
-          ReadCapacityUnits: 5
-          WriteCapacityUnits: 5
+        # Cambiar el modo de facturación a PAY_PER_REQUEST
+        BillingMode: PAY_PER_REQUEST
         PointInTimeRecoverySpecification:
           PointInTimeRecoveryEnabled: true  # Habilitar PITR
 
@@ -128,17 +127,8 @@ resources:
             KeyType: HASH
         Projection:
           ProjectionType: ALL
-        ProvisionedThroughput:
-          ReadCapacityUnits: 5
-          WriteCapacityUnits: 5
+        # Autoescalado, sin provisión manual de capacidad
+        BillingMode: PAY_PER_REQUEST
         TableName: !Ref UsersTable
 
-
-  Outputs:
-    UsersTableName:
-      Description: "Nombre de la tabla DynamoDB"
-      Value: !Ref UsersTable
-    UsersTableCountryIndexName:
-      Description: "Nombre del índice secundario para búsqueda por país"
-      Value: !Ref UsersTableCountryIndex
 

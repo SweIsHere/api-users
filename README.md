@@ -14,7 +14,14 @@ Este repositorio contiene el código para la API de usuarios, que incluye las si
 - **Obtención de usuario por `tenant_id`** (`GET /users/info`)
 
 ## Además de un lambda "Validate Token"
-Donde se crear un "token" y un refres_token por cada usuario. 
+Donde se va a  crear un "token" y un refres_token por cada usuario. 
+
+## Tabla Users:
+![image](https://github.com/user-attachments/assets/3fb009a2-02cf-485b-a507-666b8bcca8c2)
+
+## Tabla Tokens:
+
+![image](https://github.com/user-attachments/assets/d3091f62-7f57-460d-bd0b-b88c69598f9a)
 
 ## Requisitos
 

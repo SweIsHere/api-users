@@ -13,9 +13,12 @@ Este repositorio contiene el código para la API de usuarios, que incluye las si
 - **Obtención de usuarios por país** (`GET /users/getallbycountry`)
 - **Obtención de usuario por `tenant_id`** (`GET /users/info`)
 
+## Además de un lambda "Validate Token"
+Donde se crear un "token" y un refres_token por cada usuario. 
+
 ## Requisitos
 
-- **Node.js**: Asegúrate de tener [Node.js](https://nodejs.org/) instalado en tu máquina.
+- **Python**
 - **AWS CLI**: Debes tener configurado tu AWS CLI con las credenciales necesarias.
 - **Serverless Framework**: Instala el Serverless Framework globalmente usando el siguiente comando:
   

@@ -1,6 +1,7 @@
 import boto3
 import os
 from boto3.dynamodb.conditions import Key
+import json
 
 # Cliente de DynamoDB
 dynamodb = boto3.resource('dynamodb')
@@ -10,16 +11,22 @@ USERS_TABLE = os.environ['TABLE_NAME_USERS']
 table = dynamodb.Table(USERS_TABLE)
 
 def lambda_handler(event, context):
-    # Obtener el valor de 'country' directamente del evento
-    country = event.get('country')
-
-    if not country:
-        return {
-            "statusCode": 400,
-            "message": "Falta el parámetro 'country'"
-        }
-
     try:
+       
+        
+        body = event['body'] 
+
+        # Obtener el valor de 'country' del cuerpo
+        country = body.get('country')
+
+        if not country:
+            return {
+                "statusCode": 400,
+                "message": "Falta el parámetro 'country'"
+            }
+            
+        country = country.strip().lower()
+
         # Hacer la consulta en la tabla usando el índice GSI basado en 'country'
         response = table.query(
             IndexName='CountryIndex',  # Usar el índice GSI definido para 'country'
@@ -27,7 +34,7 @@ def lambda_handler(event, context):
         )
 
         items = response.get('Items', [])
-        
+
         if not items:
             return {
                 "statusCode": 404,
@@ -40,7 +47,7 @@ def lambda_handler(event, context):
             "message": f"Usuarios encontrados para el país {country}",
             "users": items
         }
-    
+
     except Exception as e:
         # Manejo de errores
         print(f"Error al consultar los usuarios: {e}")

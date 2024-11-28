@@ -29,8 +29,7 @@ def lambda_handler(event, context):
             }
 
         # Obtener el cuerpo de la solicitud
-        body = event.get('body', '{}')  # Si el body es un string JSON, lo dejamos como string
-        body = json.loads(body)  # Deserializamos el body si es necesario
+        body = event['body']
 
         # Obtener tenant_id del cuerpo
         tenant_id = body.get('tenant_id')

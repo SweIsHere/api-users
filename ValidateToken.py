@@ -20,8 +20,7 @@ def lambda_handler(event, context):
                 'body': 'Faltan parámetros tenant_id o token'
             }
 
-        # Obtener el nombre de la tabla de usuarios desde las variables de entorno
-        table_name = os.environ['TABLE_NAME_USERS']
+        table_name = os.environ['TABLE_NAME_TOKENS']
         print(f"Usando la tabla DynamoDB: {table_name}")
 
         # Cliente DynamoDB

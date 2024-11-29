@@ -91,7 +91,8 @@ def lambda_handler(event, context):
         return {
             "statusCode": 200,
             "photo": user.get("photo"),
-            "username": user.get("username")
+            "username": user.get("username"),
+            "fav_ins":user.get("fav_ins")
         }
 
     except Exception as e:

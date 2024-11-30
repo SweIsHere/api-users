@@ -127,7 +127,7 @@ resources:
   Resources:
     # Tabla DynamoDB para usuarios (Pt_users)
     DynamoDbTableUsers:
-      Type: 'AWS::DynamoDB::Table'
+      Type: 'AWS::DynamoDB::Table's
       Properties:
         AttributeDefinitions:
           - AttributeName: tenant_id
@@ -137,9 +137,7 @@ resources:
         KeySchema:
           - AttributeName: tenant_id
             KeyType: HASH
-        ProvisionedThroughput:
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
+        
         TableName: ${self:provider.environment.TABLE_NAME_USERS}  # Nombre de la tabla de usuarios
 
         # Habilitar la recuperación de punto en el tiempo (backup)

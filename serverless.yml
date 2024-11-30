@@ -154,9 +154,7 @@ resources:
                 KeyType: HASH  # 'country' como clave HASH en el índice
             Projection:
               ProjectionType: ALL  # Incluye todos los atributos en el índice
-            ProvisionedThroughput:
-              ReadCapacityUnits: 1
-              WriteCapacityUnits: 1
+            
 
         BillingMode: PAY_PER_REQUEST
 
@@ -174,9 +172,7 @@ resources:
             KeyType: HASH
           - AttributeName: token
             KeyType: RANGE  # Sort key para los tokens
-        ProvisionedThroughput:
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
+        
         TableName: ${self:provider.environment.TABLE_NAME_TOKENS}  # Nombre de la tabla de tokens
 
         # Habilitar la recuperación de punto en el tiempo (backup)

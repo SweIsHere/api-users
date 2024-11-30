@@ -127,7 +127,7 @@ resources:
   Resources:
     # Tabla DynamoDB para usuarios (Pt_users)
     DynamoDbTableUsers:
-      Type: 'AWS::DynamoDB::Table's
+      Type: 'AWS::DynamoDB::Table'
       Properties:
         AttributeDefinitions:
           - AttributeName: tenant_id

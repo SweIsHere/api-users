@@ -12,10 +12,10 @@ provider:
     role: arn:aws:iam::542697993719:role/LabRole
   environment:
     # Definir nombres únicos para las tablas usando el stage
-    TABLE_NAME_USERS: ${self:provider.stage}-Pt_users  # Nombre único para la tabla de usuarios
-    TABLE_NAME_TOKENS: ${self:provider.stage}-Pt_tokens_acceso  # Nombre único para la tabla de tokens
-    SERVICE_NAME: ${self:service}
-    STAGE: ${self:provider.stage}
+    TABLE_NAME_USERS: ${sls:stage}-Pt_users  # Nombre único para la tabla de usuarios
+    TABLE_NAME_TOKENS: ${sls:stage}-Pt_tokens_acceso  # Nombre único para la tabla de tokens
+    SERVICE_NAME: ${sls:stage}
+    
 
 functions:
   # Función para registrar un usuario

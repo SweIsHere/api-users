@@ -47,13 +47,27 @@ def lambda_handler(event, context):
         if not country_input.isalpha():
             mensaje = {'error': 'Invalid country, please enter a valid name'}
             return {'statusCode': 400, 'body': mensaje}
+        
+        # Conectar a DynamoDB
+        dynamodb = boto3.resource('dynamodb')
+        t_usuarios = dynamodb.Table(table_name)  # Usar el nombre de la tabla desde el environment variable
+
+        # Verificar si el artista ya existe en la base de datos 
+        response = t_usuarios.query(
+            KeyConditionExpression=boto3.dynamodb.conditions.Key('tenant_id').eq(tenant_id)
+        )
+
+        if response['Items']:
+            mensaje = {'error': 'El usuario ya está registrado'}
+            return {
+                'statusCode': 400,
+                'body': mensaje  # El artista ya existe
+            }
 
         # Hashea la contraseña antes de almacenarla
         hashed_password = hash_password(password)
 
-        # Conectar a DynamoDB
-        dynamodb = boto3.resource('dynamodb')
-        t_usuarios = dynamodb.Table(table_name)  # Usar el nombre de la tabla desde el environment variable
+        
 
         # Almacenar los datos del usuario en la tabla de usuarios en DynamoDB
         t_usuarios.put_item(
